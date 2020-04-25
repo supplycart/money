@@ -1,0 +1,37 @@
+{
+  "name": "supplycart/money",
+  "require": {
+    "php": "^7.4",
+    "moneyphp/money": "^3.3",
+    "ext-json": "*",
+    "ext-intl": "*"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^5.1",
+    "orchestra/canvas": "^5.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Supplycart\\Money\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Supplycart\\Money\\Tests": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Supplycart\\Money\\MoneyServiceProvider"
+      ]
+    }
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Azri Ismail",
+      "email": "mazri.iar@gmail.com"
+    }
+  ]
+}
