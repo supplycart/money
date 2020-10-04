@@ -1,5 +1,6 @@
 {
   "name": "supplycart/money",
+  "description": "Package to handle money operation for supplycart",
   "require": {
     "php": "^7.4",
     "moneyphp/money": "^3.3",
