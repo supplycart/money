@@ -10,6 +10,8 @@ class Currency
     const HKD = 'HKD';
     const VND = 'VND';
     const THB = 'THB';
+    const BND = 'BND';
+    const PHP = 'PHP';
 
     public static function default()
     {

@@ -2,35 +2,22 @@
 
 namespace Supplycart\Money;
 
+use Brick\Math\BigDecimal;
+use Brick\Math\BigInteger;
+use Brick\Math\RoundingMode;
+use Brick\Money\Money as BrickMoney;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
-use Money\Currencies\ISOCurrencies;
-use Money\Formatter\IntlMoneyFormatter;
-use Money\Money as MoneyPHP;
-use NumberFormatter;
 
-/**
- * Class Money
- * @package App\Domains\Shared\Money
- *
- * @method string getCurrency()
- */
 class Money implements Arrayable, JsonSerializable
 {
-    /**
-     * @var string
-     */
-    private string $amount;
+    private BigInteger $amount;
 
-    /**
-     * @var string
-     */
     private string $currency;
 
-    /**
-     * @var \Money\Money
-     */
-    private MoneyPHP $instance;
+    public static int $scale = 3;
+
+    public static int $roundingMode = RoundingMode::HALF_UP;
 
     /**
      * Money constructor.
@@ -39,114 +26,123 @@ class Money implements Arrayable, JsonSerializable
      */
     public function __construct(string $amount, string $currency = Currency::MYR)
     {
-        $this->amount = $amount;
+        $this->amount = BigInteger::of($amount);
         $this->currency = $currency;
-
-        $this->instance = new MoneyPHP($amount, new \Money\Currency($currency));
     }
 
     public function __call($name, $arguments)
     {
-        return $this->instance->{$name}($arguments);
+        return BrickMoney::ofMinor($this->amount, $this->currency)->{$name}($arguments);
     }
 
-    public function getAmount(): string
+    public static function parse($value, $currency = null)
     {
-        return (string) $this->amount;
+        $currency = $currency ?? Currency::default();
+
+        if ($value instanceof Money) {
+            $amount = $value->getAmount();
+            $currency = $value->getCurrency();
+        } elseif (is_array($value)) {
+            $amount = data_get($value, 'amount', 0);
+            $currency = data_get($value, 'currency', $currency);
+        } else {
+            $amount = $value;
+        }
+
+        return new static($amount, $currency);
     }
 
-    public static function fromMoney(MoneyPHP $money)
+    public static function fromCents(int $amount, string $currency = Currency::MYR)
     {
-        return new static($money->getAmount(), $money->getCurrency()->getCode());
+        return new static($amount, $currency);
     }
 
-    public function toDecimal(): float
+    public static function fromDecimal(string $amount, string $currency = Currency::MYR)
     {
-        return (float) $this->instance->getAmount() / 100;
+        $intAmount = BigDecimal::of($amount)
+            ->toScale(static::$scale, static::$roundingMode)
+            ->multipliedBy(100)
+            ->toBigInteger();
+
+        return new static($intAmount, $currency);
     }
 
-    public function toDecimalFormat()
+    public function toDecimal(): string
     {
-        $currencies = new ISOCurrencies();
-
-        $currencyConfig = config("currency.format.{$this->currency}");
-        $locale = data_get($currencyConfig, 'locale', config('app.locale'));
-
-        $numberFormatter = new NumberFormatter($locale, NumberFormatter::DECIMAL);
-        $moneyFormatter = new IntlMoneyFormatter($numberFormatter, $currencies);
-
-        return $moneyFormatter->format($this->getInstance());
+        return (string) BrickMoney::ofMinor($this->amount, $this->currency)
+            ->getAmount()
+            ->toScale(static::$scale, static::$roundingMode);
     }
 
     public function toCurrencyFormat()
     {
-        $currencies = new ISOCurrencies();
+        $locale = Locale::$currencies[$this->currency];
 
-        $currencyConfig = config("currency.format.{$this->currency}");
-        $locale = data_get($currencyConfig, 'locale', config('app.locale'));
-        $format = data_get($currencyConfig, 'formatWithSign', data_get($currencyConfig, 'format'));
-
-        $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
-        $format && $numberFormatter->setPattern($format);
-
-        $moneyFormatter = new IntlMoneyFormatter($numberFormatter, $currencies);
-
-        return $moneyFormatter->format($this->getInstance());
+        return BrickMoney::ofMinor($this->amount, $this->currency)->formatTo($locale);
     }
 
-    public function getInstance(): MoneyPHP
+    public function getAmount(): int
     {
-        return $this->instance;
+        return $this->amount->toInt();
     }
 
-    public function add($amount): Money
+    public function getCurrency(): string
     {
-        if ($amount instanceof Money) {
-            $amount = $amount->getInstance();
-        } else {
-            $amount = new MoneyPHP($amount, $this->instance->getCurrency());
-        }
-
-        return static::fromMoney($amount->add($amount));
+        return $this->currency;
     }
 
-    public function subtract($amount): Money
+    public function add($value): Money
     {
-        if ($amount instanceof Money) {
-            $amount = $amount->getInstance();
-        } else {
-            $amount = new MoneyPHP($amount, $this->instance->getCurrency());
-        }
+        $value = BrickMoney::ofMinor($this->amount, $this->currency)->plus(
+            static::parse($value),
+            static::$roundingMode
+        );
 
-        return static::fromMoney($amount->subtract($amount));
+        return new static($value->getMinorAmount(), $this->currency);
     }
 
-    public function multiply($number): Money
+    public function subtract($value): Money
     {
-        return static::fromMoney($this->instance->multiply($number));
+        $value = BrickMoney::ofMinor($this->amount, $this->currency)->minus(
+            static::parse($value),
+            static::$roundingMode
+        );
+
+        return new static($value->getMinorAmount(), $this->currency);
     }
 
-    public function divide($number): Money
+    public function multiply($value): Money
     {
-        return static::fromMoney($this->instance->divide($number));
+        $value = BrickMoney::ofMinor($this->amount, $this->currency)->multipliedBy(
+            $value,
+            static::$roundingMode
+        );
+
+        return new static($value->getMinorAmount(), $this->currency);
+    }
+
+    public function divide($value): Money
+    {
+        $value = BrickMoney::ofMinor($this->amount, $this->currency)->dividedBy(
+            $value,
+            static::$roundingMode
+        );
+
+        return new static($value->getMinorAmount(), $this->currency);
     }
 
     public function withTax($amount): Money
     {
-        if ($amount instanceof Money) {
-            $tax = $amount->getInstance();
-        } else {
-            $tax = new MoneyPHP($amount, $this->instance->getCurrency());
-        }
+        $taxValue = static::parse($amount);
 
-        return static::fromMoney($this->instance->add($tax));
+        return $this->add($taxValue);
     }
 
     public static function format(string $amount, string $currency): string
     {
         $money = new static($amount, $currency);
 
-        return $money->toDecimalFormat();
+        return $money->toDecimal();
     }
 
     public static function formatWithSign(string $amount, string $currency)
@@ -158,7 +154,7 @@ class Money implements Arrayable, JsonSerializable
 
     public function __toString()
     {
-        return (string) $this->toDecimal();
+        return $this->toDecimal();
     }
 
     /**
@@ -167,8 +163,8 @@ class Money implements Arrayable, JsonSerializable
     public function toArray()
     {
         return [
-            'amount' => (int) $this->instance->getAmount(),
-            'currency' => $this->instance->getCurrency()->getCode(),
+            'amount' => $this->getAmount(),
+            'currency' => $this->getCurrency(),
         ];
     }
 
