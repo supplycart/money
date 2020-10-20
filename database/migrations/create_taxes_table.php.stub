@@ -18,6 +18,7 @@ class CreateTaxesTable extends Migration
             $table->string('name');
             $table->string('description');
             $table->string('country')->index();
+            $table->string('currency')->index();
             $table->decimal('rate');
             $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
