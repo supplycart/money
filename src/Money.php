@@ -21,10 +21,10 @@ class Money implements Arrayable, JsonSerializable
 
     /**
      * Money constructor.
-     * @param string $amount
+     * @param string|null $amount
      * @param string $currency
      */
-    public function __construct(string? $amount, string $currency = Currency::MYR)
+    public function __construct(?string $amount, string $currency = Currency::MYR)
     {
         $this->amount = BigInteger::of($amount ?? 0);
         $this->currency = $currency;
