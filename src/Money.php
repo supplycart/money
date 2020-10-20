@@ -8,12 +8,15 @@ use Brick\Math\RoundingMode;
 use Brick\Money\Money as BrickMoney;
 use Illuminate\Contracts\Support\Arrayable;
 use JsonSerializable;
+use Supplycart\Money\Contracts\Tax as TaxContract;
 
 class Money implements Arrayable, JsonSerializable
 {
     private BigInteger $amount;
 
     private string $currency;
+
+    private TaxContract $tax;
 
     public static int $scale = 3;
 
@@ -131,11 +134,21 @@ class Money implements Arrayable, JsonSerializable
         return new static($value->getMinorAmount(), $this->currency);
     }
 
-    public function withTax($amount): Money
+    public function withTax(TaxContract $tax): Money
     {
-        $taxValue = static::parse($amount);
+        $this->tax = $tax;
 
-        return $this->add($taxValue);
+        return $this;
+    }
+
+    public function getTaxAmount()
+    {
+        return $this->multiply($this->tax->getTaxRate() / 100);
+    }
+
+    public function getAmountWithTax()
+    {
+        return $this->add($this->getTaxAmount())->getAmount();
     }
 
     public static function format(string $amount, string $currency): string
