@@ -141,8 +141,21 @@ class Money implements Arrayable, JsonSerializable
         return $this;
     }
 
+    public function afterTax(): Money
+    {
+        if (!$this->tax) {
+            return $this;
+        }
+
+        return new static($this->getAmountWithTax(), $this->currency);
+    }
+
     public function getTaxAmount()
     {
+        if (!$this->tax) {
+            return 0;
+        }
+
         return $this->multiply($this->tax->getTaxRate() / 100);
     }
 
