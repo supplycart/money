@@ -19,8 +19,8 @@ class MoneyValue implements CastsAttributes
             return $value->getAmount();
         }
 
-        if (is_array($value) && data_get($value, 'amount')) {
-            return data_get($value, 'amount');
+        if ($amount = data_get($value, 'amount')) {
+            return $amount;
         }
 
         if (blank($value)) {
