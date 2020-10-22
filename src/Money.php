@@ -178,6 +178,11 @@ class Money implements Arrayable, JsonSerializable
         return $money->toCurrencyFormat();
     }
 
+    public static function zero(string $currency = Currency::MYR): Money
+    {
+        return new static(0, $currency);
+    }
+
     public function __toString()
     {
         return $this->toDecimal();
