@@ -16,7 +16,7 @@ class Money implements Arrayable, JsonSerializable
 
     private string $currency;
 
-    private TaxContract $tax;
+    private ?TaxContract $tax = null;
 
     public static int $scale = 3;
 
