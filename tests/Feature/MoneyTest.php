@@ -61,4 +61,18 @@ class MoneyTest extends TestCase
 
         $this->assertEquals(200, $money->divide(5)->getAmount());
     }
+
+    public function test_can_create_zero_money()
+    {
+        $money = Money::zero();
+
+        $this->assertEquals(0, $money->getAmount());
+    }
+
+    public function test_can_check_money_is_zero()
+    {
+        $money = Money::zero();
+
+        $this->assertTrue($money->isZero());
+    }
 }
