@@ -183,6 +183,11 @@ class Money implements Arrayable, JsonSerializable
         return new static(0, $currency);
     }
 
+    public function isZero()
+    {
+        return $this->amount->isZero();
+    }
+
     public function __toString()
     {
         return $this->toDecimal();
