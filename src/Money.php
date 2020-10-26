@@ -69,9 +69,9 @@ final class Money implements Arrayable, Jsonable, Stringable
         return new static(BigDecimal::of($amount)->getUnscaledValue(), $currency);
     }
 
-    public function getAmount(): string
+    public function getAmount(): int
     {
-        return $this->instance->getMinorAmount()->toScale(static::$scale, static::$roundingMode);
+        return $this->instance->getMinorAmount()->toScale(static::$scale, static::$roundingMode)->toInt();
     }
 
     public function getDecimalAmount($scale = 2): string
@@ -191,8 +191,8 @@ final class Money implements Arrayable, Jsonable, Stringable
     public function toArray()
     {
         return [
-            'amount' => (string) $this->getAmount(),
-            'currency' => (string) $this->getCurrency(),
+            'amount' => $this->getAmount(),
+            'currency' => $this->getCurrency(),
         ];
     }
 
