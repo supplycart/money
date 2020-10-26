@@ -11,7 +11,7 @@ use Illuminate\Contracts\Support\Jsonable;
 use Supplycart\Money\Contracts\Tax as TaxContract;
 use Stringable;
 
-final class Money implements Arrayable, Jsonable, Stringable
+final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 {
     private BrickMoney $instance;
 
