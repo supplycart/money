@@ -11,7 +11,7 @@ use Illuminate\Contracts\Support\Jsonable;
 use Supplycart\Money\Contracts\Tax as TaxContract;
 use Stringable;
 
-class Money implements Arrayable, Jsonable, Stringable
+final class Money implements Arrayable, Jsonable, Stringable
 {
     private BrickMoney $instance;
 
@@ -71,12 +71,12 @@ class Money implements Arrayable, Jsonable, Stringable
 
     public function getAmount(): string
     {
-        return (string) $this->instance->getMinorAmount()->toScale(static::$scale, static::$roundingMode);
+        return $this->instance->getMinorAmount()->toScale(static::$scale, static::$roundingMode);
     }
 
-    public function getDecimalAmount($scale): string
+    public function getDecimalAmount($scale = 2): string
     {
-        return (string) $this->instance->getAmount()->toScale($scale, static::$roundingMode);
+        return $this->instance->getAmount()->toScale($scale, static::$roundingMode);
     }
 
     /**
@@ -191,13 +191,18 @@ class Money implements Arrayable, Jsonable, Stringable
     public function toArray()
     {
         return [
-            'amount' => $this->getAmount(),
-            'currency' => $this->getCurrency(),
+            'amount' => (string) $this->getAmount(),
+            'currency' => (string) $this->getCurrency(),
         ];
     }
 
     public function toJson($options = 0)
     {
         return json_encode($this->toArray(), $options);
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->toJson();
     }
 }

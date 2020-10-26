@@ -20,15 +20,15 @@ class MoneyTest extends TestCase
     {
         $money = new Money(1000);
 
-        $this->assertEquals(10.000, $money->toDecimal());
+        $this->assertEquals(10.000, $money->getDecimalAmount());
     }
 
     public function test_can_get_currency_format()
     {
         $money = new Money(1000);
 
-        $this->assertStringContainsString("RM", $money->toCurrencyFormat());
-        $this->assertStringContainsString("10.00", $money->toCurrencyFormat());
+        $this->assertStringContainsString("RM", $money->format());
+        $this->assertStringContainsString("10.00", $money->format());
         $this->assertTrue(true);
     }
 
@@ -74,5 +74,24 @@ class MoneyTest extends TestCase
         $money = Money::zero();
 
         $this->assertTrue($money->isZero());
+    }
+
+    public function test_can_convert_money_to_array()
+    {
+        $money = Money::zero();
+
+        $this->assertIsArray((array) $money);
+        $this->assertEquals([
+            'amount' => 0,
+            'currency' => 'MYR'
+        ], $money->toArray());
+
+        $money = Money::of(252);
+
+        $this->assertIsArray((array) $money);
+        $this->assertEquals([
+            'amount' => 252,
+            'currency' => 'MYR'
+        ], $money->toArray());
     }
 }
