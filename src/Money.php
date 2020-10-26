@@ -203,6 +203,6 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function jsonSerialize()
     {
-        return $this->toJson();
+        return $this->toArray();
     }
 }
