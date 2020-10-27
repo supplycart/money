@@ -163,11 +163,31 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
             ->toScale(static::$scale, static::$roundingMode);
     }
 
-    public function afterTax(): Money
+    public function afterTax($quantity = 1): Money
     {
-        $afterTax = $this->instance->multipliedBy(1 + $this->getTaxRate());
+        if (!$this->tax) {
+            return $this;
+        }
+
+        $afterTax = $this->instance->toRational()
+            ->multipliedBy($this->getTaxRate()->plus(1))
+            ->multipliedBy($quantity)
+            ->to($this->instance->getContext(), static::$roundingMode);
 
         return new static($afterTax->getMinorAmount(), $this->getCurrency());
+    }
+
+    public function beforeTax(): Money
+    {
+        if (!$this->tax) {
+            return $this;
+        }
+
+        $beforeTax = $this->instance->toRational()
+            ->dividedBy($this->getTaxRate()->plus(1))
+            ->to($this->instance->getContext(), static::$roundingMode);
+
+        return new static($beforeTax->getMinorAmount(), $this->getCurrency());
     }
 
     public static function zero(string $currency = Currency::MYR): Money

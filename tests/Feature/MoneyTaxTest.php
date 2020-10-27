@@ -18,6 +18,21 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals('0.15', $money->getTaxAmount());
         $this->assertEquals('12.10', (string) $money->getTaxAmount(80));
     }
+
+    public function test_can_get_after_tax_amount()
+    {
+        $money = Money::of(252)->withTax(new Tax);
+        $this->assertEquals(267, $money->afterTax()->getAmount());
+
+        $money = Money::of(252);
+        $this->assertEquals(252, $money->afterTax()->getAmount());
+    }
+
+    public function test_can_get_before_tax_amount()
+    {
+        $money = Money::of(267)->withTax(new Tax);
+        $this->assertEquals(252, $money->beforeTax()->getAmount());
+    }
 }
 
 class Tax implements \Supplycart\Money\Contracts\Tax
