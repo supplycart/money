@@ -24,6 +24,9 @@ class MoneyTaxTest extends TestCase
         $money = Money::of(252)->withTax(new Tax);
         $this->assertEquals(267, $money->afterTax()->getAmount());
 
+        $money = Money::of(252)->withTax(new Tax);
+        $this->assertEquals(16829, $money->afterTax(63)->getAmount());
+
         $money = Money::of(252);
         $this->assertEquals(252, $money->afterTax()->getAmount());
     }
