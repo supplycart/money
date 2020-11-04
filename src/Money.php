@@ -61,12 +61,16 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public static function fromCents(int $amount, string $currency = Currency::MYR)
     {
-        return new static($amount, $currency);
+        $instance = BrickMoney::ofMinor($amount, $currency);
+
+        return new static($instance->getMinorAmount(), $currency);
     }
 
     public static function fromDecimal(string $amount, string $currency = Currency::MYR)
     {
-        return new static(BigDecimal::of($amount)->getUnscaledValue(), $currency);
+        $instance = BrickMoney::of($amount, $currency);
+
+        return new static($instance->getMinorAmount(), $currency);
     }
 
     public function getAmount(): int
