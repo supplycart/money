@@ -76,6 +76,15 @@ class MoneyTest extends TestCase
         $this->assertTrue($money->isZero());
     }
 
+    public function test_can_create_money_from_decimal()
+    {
+        $this->assertEquals(1500, Money::fromDecimal(15.0)->getAmount());
+        $this->assertEquals(1500, Money::fromDecimal(15.00)->getAmount());
+        $this->assertEquals(1500, Money::fromDecimal(15)->getAmount());
+        $this->assertEquals(1500, Money::fromDecimal('15.0')->getAmount());
+        $this->assertEquals(1500, Money::fromDecimal('15')->getAmount());
+    }
+
     public function test_can_convert_money_to_array()
     {
         $money = Money::zero();
