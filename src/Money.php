@@ -194,6 +194,20 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
         return new static($beforeTax->getMinorAmount(), $this->getCurrency());
     }
 
+    public function getTaxFromInclusiveTax(): Money
+    {
+        if (!$this->tax) {
+            return $this;
+        }
+
+        $taxFromInclusive = $this->instance->toRational()
+            ->multipliedBy($this->getTaxRate())
+            ->dividedBy($this->getTaxRate()->plus(1))
+            ->to($this->instance->getContext(), static::$roundingMode);
+
+        return new static($taxFromInclusive->getMinorAmount(), $this->getCurrency());
+    }
+
     public static function zero(string $currency = Currency::MYR): Money
     {
         return new static(0, $currency);
