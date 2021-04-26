@@ -19,7 +19,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public static int $scale = 3;
 
-    public static int $roundingMode = RoundingMode::HALF_EVEN;
+    public static int $roundingMode = RoundingMode::HALF_UP;
 
     public function __construct($amount = 0, string $currency = Currency::MYR)
     {
@@ -154,6 +154,20 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
             ->to($this->instance->getContext(), static::$roundingMode);
 
         return static::of($taxValue->getMinorAmount(), $this->getCurrency());
+    }
+
+    public function getTaxAmountFromInclusiveTax(): Money
+    {
+        if (!$this->tax) {
+            return $this;
+        }
+
+        $taxFromInclusive = $this->instance->toRational()
+            ->multipliedBy($this->getTaxRate())
+            ->dividedBy($this->getTaxRate()->plus(1))
+            ->to($this->instance->getContext(), static::$roundingMode);
+
+        return new static($taxFromInclusive->getMinorAmount(), $this->getCurrency());
     }
 
     public function getTaxRate(): BigDecimal
