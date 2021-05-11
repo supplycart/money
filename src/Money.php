@@ -81,7 +81,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function getDecimalAmount($scale = 2): string
     {
-        return $this->instance->getAmount()->dividedBy($this->getMultiplier(), $this->scale, static::$roundingMode)->toScale($this->scale, static::$roundingMode);
+        return $this->instance->getAmount()->dividedBy($this->getDivider(), $this->scale, static::$roundingMode)->toScale($this->scale, static::$roundingMode);
     }
 
     /**
