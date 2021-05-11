@@ -179,7 +179,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
         return BigRational::of($this->tax->getTaxRate())
             ->dividedBy(100)
-            ->toScale(static::$scale, static::$roundingMode);
+            ->toScale($this->scale, static::$roundingMode);
     }
 
     public function afterTax($quantity = 1): Money
