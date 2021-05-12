@@ -17,18 +17,19 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     private ?TaxContract $tax = null;
 
-    public static int $scale = 3;
+    public int $scale;
 
     public static int $roundingMode = RoundingMode::HALF_UP;
 
-    public function __construct($amount = 0, string $currency = Currency::MYR)
+    public function __construct($amount = 0, string $currency = Currency::MYR, $scale = 2)
     {
         $this->instance = BrickMoney::ofMinor($amount ?? 0, $currency, null, static::$roundingMode);
+        $this->scale = $scale;
     }
 
-    public static function of($amount = 0, string $currency = Currency::MYR)
+    public static function of($amount = 0, string $currency = Currency::MYR, $decimal = 2)
     {
-        return new static($amount, $currency);
+        return new static($amount, $currency, $decimal);
     }
 
     /**
@@ -75,12 +76,12 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function getAmount(): int
     {
-        return $this->instance->getMinorAmount()->toScale(static::$scale, static::$roundingMode)->toInt();
+        return $this->instance->getMinorAmount()->toScale($this->scale, static::$roundingMode)->toInt();
     }
 
     public function getDecimalAmount($scale = 2): string
     {
-        return $this->instance->getAmount()->toScale($scale, static::$roundingMode);
+        return $this->instance->getAmount()->dividedBy($this->getDivider(), $this->scale, static::$roundingMode)->toScale($this->scale, static::$roundingMode);
     }
 
     /**
@@ -178,7 +179,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
         return BigRational::of($this->tax->getTaxRate())
             ->dividedBy(100)
-            ->toScale(static::$scale, static::$roundingMode);
+            ->toScale($this->scale, static::$roundingMode);
     }
 
     public function afterTax($quantity = 1): Money
@@ -242,5 +243,14 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
     public function jsonSerialize()
     {
         return $this->toArray();
+    }
+
+    /**
+     * This function is to cater more than two decimal points
+     * @return int
+     */
+    public function getDivider(): int
+    {
+        return $this->scale === 2 ? 1 : pow(10,$this->scale - 2);
     }
 }

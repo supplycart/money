@@ -10,7 +10,9 @@ class MoneyValue implements CastsAttributes
 {
     public function get($model, string $key, $value, array $attributes)
     {
-        return new Money($value, $model->currency ?? Currency::default());
+        $scale = method_exists($model, 'getDecimalValue') ? $model->getDecimalValue() : 2;
+
+        return new Money($value, $model->currency ?? Currency::default(), $scale);
     }
 
     public function set($model, string $key, $value, array $attributes)
