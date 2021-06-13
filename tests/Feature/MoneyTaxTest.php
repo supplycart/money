@@ -19,6 +19,16 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals('12.10', (string) $money->getTaxAmount(80));
     }
 
+    public function test_can_get_tax_amount_for_a_money_for_4_decimal_place()
+    {
+        $money = Money::of(10000, 'MYR', 4)->withTax(new Tax);
+
+        $this->assertEquals(10000, $money->getAmount());
+        $this->assertEquals('0.0600', $money->getTaxRate());
+        $this->assertEquals('0.0600', $money->getTaxAmount());
+        $this->assertEquals('4.8000', (string) $money->getTaxAmount(80));
+    }
+
     public function test_can_get_after_tax_amount()
     {
         $money = Money::of(252)->withTax(new Tax);
@@ -31,10 +41,40 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals(252, $money->afterTax()->getAmount());
     }
 
+    public function test_can_get_after_tax_amount_for_4_decimal()
+    {
+        $money = Money::of(10000, 'MYR', 4)->withTax(new Tax);
+
+        $this->assertEquals(10600, $money->afterTax()->getAmount());
+        $this->assertEquals(667800, $money->afterTax(63)->getAmount());
+
+        $money = Money::of(10000, 'MYR', 4);
+        $this->assertEquals(10000, $money->afterTax()->getAmount());
+    }
+
     public function test_can_get_before_tax_amount()
     {
         $money = Money::of(267)->withTax(new Tax);
         $this->assertEquals(252, $money->beforeTax()->getAmount());
+    }
+
+    public function test_can_get_before_tax_amount_for_4_decimal_place()
+    {
+        $money = Money::of(10600)->withTax(new Tax);
+        $this->assertEquals(10000, $money->beforeTax()->getAmount());
+    }
+
+    public function test_can_get_tax_from_price_incl_tax()
+    {
+        $money = Money::of(267)->withTax(new Tax);
+        $this->assertEquals(15, $money->getTaxAmountFromInclusiveTax()->getAmount());
+    }
+
+    public function test_can_get_tax_from_price_incl_tax_for_4_decimal_place()
+    {
+        $money = Money::of(10600)->withTax(new Tax);
+        $this->assertEquals(600, $money->getTaxAmountFromInclusiveTax()->getAmount());
+
     }
 }
 

@@ -5,6 +5,7 @@ namespace Supplycart\Money;
 use Brick\Math\BigDecimal;
 use Brick\Math\BigRational;
 use Brick\Math\RoundingMode;
+use Brick\Money\Context\CustomContext;
 use Brick\Money\Money as BrickMoney;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
@@ -23,7 +24,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function __construct($amount = 0, string $currency = Currency::MYR, $scale = 2)
     {
-        $this->instance = BrickMoney::ofMinor($amount ?? 0, $currency, null, static::$roundingMode);
+        $this->instance = BrickMoney::ofMinor($amount ?? 0, $currency, new CustomContext($scale), static::$roundingMode);
         $this->scale = $scale;
     }
 
@@ -81,7 +82,10 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function getDecimalAmount($scale = 2): string
     {
-        return $this->instance->getAmount()->dividedBy($this->getDivider(), $this->scale, static::$roundingMode)->toScale($this->scale, static::$roundingMode);
+        return $this->instance
+            ->getAmount()
+            ->dividedBy($this->getDivider(), $this->scale, static::$roundingMode)
+            ->toScale($this->scale, static::$roundingMode);
     }
 
     /**
@@ -114,26 +118,28 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function add($value): Money
     {
-        return new static($this->instance->plus($value)->getMinorAmount(), $this->instance->getCurrency());
+        return new static($this->instance->plus($value->multiply($this->getDivider()), static::$roundingMode)->getMinorAmount(),
+            $this->instance->getCurrency(), $this->scale);
     }
 
     public function subtract($value): Money
     {
-        return new static($this->instance->minus($value)->getMinorAmount(), $this->instance->getCurrency());
+        return new static($this->instance->minus($value->multiply($this->getDivider()))->getMinorAmount()
+            , $this->instance->getCurrency(), $this->scale);
     }
 
     public function multiply($value): Money
     {
         $value = $this->instance->multipliedBy($value, static::$roundingMode);
 
-        return new static($value->getMinorAmount(), $value->getCurrency());
+        return new static($value->getMinorAmount(), $value->getCurrency(), $this->scale);
     }
 
     public function divide($value): Money
     {
         $value = $this->instance->dividedBy($value, static::$roundingMode);
 
-        return new static($value->getMinorAmount(), $this->instance->getCurrency());
+        return new static($value->getMinorAmount(), $this->instance->getCurrency(), $this->scale);
     }
 
     public function withTax(TaxContract $tax): Money
@@ -154,7 +160,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
             ->multipliedBy($quantity)
             ->to($this->instance->getContext(), static::$roundingMode);
 
-        return static::of($taxValue->getMinorAmount(), $this->getCurrency());
+        return static::of($taxValue->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
     public function getTaxAmountFromInclusiveTax(): Money
@@ -214,7 +220,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
         return new static(0, $currency);
     }
 
-    public function isZero()
+    public function isZero(): bool
     {
         return $this->instance->isZero();
     }
@@ -251,6 +257,6 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
      */
     public function getDivider(): int
     {
-        return $this->scale === 2 ? 1 : pow(10,$this->scale - 2);
+        return $this->scale === 2 ? 1 : pow(10, $this->scale - 2);
     }
 }

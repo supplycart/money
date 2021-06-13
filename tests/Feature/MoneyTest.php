@@ -23,6 +23,13 @@ class MoneyTest extends TestCase
         $this->assertEquals(10.000, $money->getDecimalAmount());
     }
 
+    public function test_can_get_decimal_value_from_money_for_4_decimal_point()
+    {
+        $money = new Money(10000, 'MYR', 4);
+
+        $this->assertEquals(1.0000, $money->getDecimalAmount());
+    }
+
     public function test_can_get_currency_format()
     {
         $money = new Money(1000);
@@ -40,12 +47,30 @@ class MoneyTest extends TestCase
         $this->assertEquals(1500, $money->add($money2)->getAmount());
     }
 
+    public function test_can_add_money_for_4_decimal_place()
+    {
+        $money = new Money(10000, 'MYR', 4);
+        $money2 = new Money(500, 'MYR', 4);
+
+        $this->assertEquals(10500, $money->add($money2)->getAmount());
+        $this->assertEquals(1.0500, $money->add($money2)->getDecimalAmount());
+    }
+
     public function test_can_minus_money()
     {
         $money = new Money(1000);
         $money2 = new Money(500);
 
         $this->assertEquals(500, $money->subtract($money2)->getAmount());
+    }
+
+    public function test_can_minus_money_for_4_decimal_place()
+    {
+        $money = new Money(10000, 'MYR', 4);
+        $money2 = new Money(500, 'MYR', 4);
+
+        $this->assertEquals(9500, $money->subtract($money2)->getAmount());
+        $this->assertEquals(0.9500, $money->subtract($money2)->getDecimalAmount());
     }
 
     public function test_can_multiply_money()
@@ -55,11 +80,27 @@ class MoneyTest extends TestCase
         $this->assertEquals(5000, $money->multiply(5)->getAmount());
     }
 
+    public function test_can_multiply_money_for_4_decimal_place()
+    {
+        $money = new Money(10000, 'MYR', 4);
+
+        $this->assertEquals(50000, $money->multiply(5)->getAmount());
+        $this->assertEquals(5.0000, $money->multiply(5)->getDecimalAmount());
+    }
+
     public function test_can_divide_money()
     {
         $money = new Money(1000);
 
         $this->assertEquals(200, $money->divide(5)->getAmount());
+    }
+
+    public function test_can_divide_money_for_4_decimal_place()
+    {
+        $money = new Money(10000, 'MYR', 4);
+
+        $this->assertEquals(2000, $money->divide(5)->getAmount());
+        $this->assertEquals(0.2000, $money->divide(5)->getDecimalAmount());
     }
 
     public function test_can_create_zero_money()
