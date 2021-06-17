@@ -144,4 +144,17 @@ class MoneyTest extends TestCase
             'currency' => 'MYR'
         ], $money->toArray());
     }
+
+    public function test_can_multiply_four_decimal()
+    {
+        $money = Money::of(90001, 'MYR', 4);
+        $result = $money->multiply(1.0001)->getAmount();
+        $this->assertEquals(90010, $result);
+
+        $money = Money::of(1000001, 'MYR', 4);
+        $result1 = $money->multiply(9.1236)->getAmount();
+        $this->assertEquals(9123609, $result1);
+    }
+
+
 }

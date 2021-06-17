@@ -47,34 +47,39 @@ class MoneyTaxTest extends TestCase
 
         $this->assertEquals(10600, $money->afterTax()->getAmount());
         $this->assertEquals(667800, $money->afterTax(63)->getAmount());
+        $this->assertEquals(66.7800, $money->afterTax(63)->getDecimalAmount());
 
         $money = Money::of(10000, 'MYR', 4);
         $this->assertEquals(10000, $money->afterTax()->getAmount());
+        $this->assertEquals(1.0000, $money->afterTax()->getDecimalAmount());
     }
 
     public function test_can_get_before_tax_amount()
     {
         $money = Money::of(267)->withTax(new Tax);
         $this->assertEquals(252, $money->beforeTax()->getAmount());
+        $this->assertEquals(2.52, $money->beforeTax()->getDecimalAmount());
     }
 
     public function test_can_get_before_tax_amount_for_4_decimal_place()
     {
-        $money = Money::of(10600)->withTax(new Tax);
+        $money = Money::of(10600,'MYR', 4)->withTax(new Tax);
         $this->assertEquals(10000, $money->beforeTax()->getAmount());
+        $this->assertEquals(1.0000, $money->beforeTax()->getDecimalAmount());
     }
 
     public function test_can_get_tax_from_price_incl_tax()
     {
         $money = Money::of(267)->withTax(new Tax);
         $this->assertEquals(15, $money->getTaxAmountFromInclusiveTax()->getAmount());
+        $this->assertEquals(0.15, $money->getTaxAmountFromInclusiveTax()->getDecimalAmount());
     }
 
     public function test_can_get_tax_from_price_incl_tax_for_4_decimal_place()
     {
-        $money = Money::of(10600)->withTax(new Tax);
+        $money = Money::of(10600, 'MYR', 4)->withTax(new Tax);
         $this->assertEquals(600, $money->getTaxAmountFromInclusiveTax()->getAmount());
-
+        $this->assertEquals(0.0600, $money->getTaxAmountFromInclusiveTax()->getDecimalAmount());
     }
 }
 
