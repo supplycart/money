@@ -175,7 +175,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
             ->dividedBy($this->getTaxRate()->plus(1))
             ->to($this->instance->getContext(), static::$roundingMode);
 
-        return new static($taxFromInclusive->getMinorAmount(), $this->getCurrency());
+        return new static($taxFromInclusive->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
     public function getTaxRate(): BigDecimal
@@ -200,7 +200,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
             ->multipliedBy($quantity)
             ->to($this->instance->getContext(), static::$roundingMode);
 
-        return new static($afterTax->getMinorAmount(), $this->getCurrency());
+        return new static($afterTax->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
     public function beforeTax(): Money
@@ -213,7 +213,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
             ->dividedBy($this->getTaxRate()->plus(1))
             ->to($this->instance->getContext(), static::$roundingMode);
 
-        return new static($beforeTax->getMinorAmount(), $this->getCurrency());
+        return new static($beforeTax->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
     public static function zero(string $currency = Currency::MYR): Money
