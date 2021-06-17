@@ -4,7 +4,6 @@ namespace Supplycart\Money;
 
 use Brick\Math\BigDecimal;
 use Brick\Math\BigRational;
-use Brick\Math\Exception\RoundingNecessaryException;
 use Brick\Math\RoundingMode;
 use Brick\Money\Context\CustomContext;
 use Brick\Money\Money as BrickMoney;
