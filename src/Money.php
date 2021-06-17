@@ -4,6 +4,7 @@ namespace Supplycart\Money;
 
 use Brick\Math\BigDecimal;
 use Brick\Math\BigRational;
+use Brick\Math\Exception\RoundingNecessaryException;
 use Brick\Math\RoundingMode;
 use Brick\Money\Context\CustomContext;
 use Brick\Money\Money as BrickMoney;
@@ -77,7 +78,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function getAmount(): int
     {
-        return $this->instance->getMinorAmount()->toScale($this->scale, static::$roundingMode)->toInt();
+        return (int) $this->instance->getMinorAmount()->toScale($this->scale, static::$roundingMode)->toFloat();
     }
 
     public function getDecimalAmount($scale = 2): string
