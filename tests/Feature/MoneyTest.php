@@ -156,5 +156,12 @@ class MoneyTest extends TestCase
         $this->assertEquals(9123609, $result1);
     }
 
+    public function test_number_format_working()
+    {
+        $money = Money::of(12341234, 'MYR', 4);
+        $result = $money->toNumberFormat(2);
+
+        $this->assertEquals('1,234.12', $result);
+    }
 
 }

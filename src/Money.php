@@ -111,6 +111,11 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
         return $this->instance->formatTo($locale);
     }
 
+    public function toNumberFormat($decimal = 2)
+    {
+        return number_format($this->getDecimalAmount(), $decimal);
+    }
+
     public function getCurrency(): string
     {
         return (string) $this->instance->getCurrency();
