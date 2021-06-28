@@ -24,7 +24,8 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function __construct($amount = 0, string $currency = Currency::MYR, $scale = 2)
     {
-        $this->instance = BrickMoney::ofMinor($amount ?? 0, $currency, new CustomContext($scale), static::$roundingMode);
+        $this->instance = BrickMoney::ofMinor($amount ?? 0, $currency, new CustomContext($scale),
+            static::$roundingMode);
         $this->scale = $scale;
     }
 
@@ -123,8 +124,15 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function add($value): Money
     {
-        return new static($this->instance->plus($value->multiply($this->getDivider()), static::$roundingMode)->getMinorAmount(),
-            $this->instance->getCurrency(), $this->scale);
+        if (!$value instanceof Money) {
+            $value = Money::of($value, $this->getCurrency(), $this->scale);
+        }
+
+        return new static(
+            $this->instance->plus(
+                $value->multiply($this->getDivider()),
+                static::$roundingMode
+            )->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
     public function subtract($value): Money

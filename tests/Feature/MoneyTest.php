@@ -39,6 +39,13 @@ class MoneyTest extends TestCase
         $this->assertTrue(true);
     }
 
+    public function test_can_add_integer()
+    {
+        $money = new Money(1000);
+
+        $this->assertEquals(1500, $money->add(500)->getAmount());
+    }
+
     public function test_can_add_money()
     {
         $money = new Money(1000);
