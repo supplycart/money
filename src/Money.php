@@ -137,6 +137,10 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function subtract($value): Money
     {
+        if (!$value instanceof Money) {
+            $value = Money::of($value, $this->getCurrency(), $this->scale);
+        }
+
         return new static($this->instance->minus($value->multiply($this->getDivider()))->getMinorAmount()
             , $this->instance->getCurrency(), $this->scale);
     }

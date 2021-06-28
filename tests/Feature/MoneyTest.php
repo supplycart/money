@@ -63,6 +63,13 @@ class MoneyTest extends TestCase
         $this->assertEquals(1.0500, $money->add($money2)->getDecimalAmount());
     }
 
+    public function test_can_minus_integer()
+    {
+        $money = new Money(1000);
+
+        $this->assertEquals(500, $money->subtract(500)->getAmount());
+    }
+
     public function test_can_minus_money()
     {
         $money = new Money(1000);
