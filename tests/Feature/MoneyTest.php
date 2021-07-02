@@ -178,4 +178,31 @@ class MoneyTest extends TestCase
         $this->assertEquals('1,234.12', $result);
     }
 
+    public function test_can_convert_from_4dp_to_2dp()
+    {
+        $money = Money::of(120001, 'MYR', 4);
+        $result = $money->convertToDifferentDecimalPoint(2);
+
+        //previous
+        $this->assertEquals('12.0001', $money->getDecimalAmount());
+        $this->assertEquals(120001, $money->getAmount());
+
+        //after
+        $this->assertEquals('12.00', $result->getDecimalAmount());
+        $this->assertEquals(1200, $result->getAmount());
+    }
+
+    public function test_can_convert_from_2dp_to_4dp()
+    {
+        $money = Money::of(1201, 'MYR', 2);
+        $result = $money->convertToDifferentDecimalPoint(4);
+
+        //previous
+        $this->assertEquals('12.01', $money->getDecimalAmount());
+        $this->assertEquals(1201, $money->getAmount());
+
+        //after
+        $this->assertEquals('12.0100', $result->getDecimalAmount());
+        $this->assertEquals(120100, $result->getAmount());
+    }
 }
