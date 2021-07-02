@@ -276,4 +276,17 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
     {
         return $this->scale === 2 ? 1 : pow(10, $this->scale - 2);
     }
+
+    public function convertToDifferentDecimalPoint(int $newDecimalPoint): Money
+    {
+        $differenceInScale = $newDecimalPoint - $this->scale;
+
+        $dividerOrMultiplier = pow(10, abs($differenceInScale));
+
+        $newValue = $this->scale < $newDecimalPoint
+            ? $this->instance->multipliedBy($dividerOrMultiplier, Money::$roundingMode)
+            : $this->instance->dividedBy($dividerOrMultiplier, Money::$roundingMode);
+
+        return new Money($newValue->getMinorAmount(), $newValue->getCurrency(), $newDecimalPoint);
+    }
 }
