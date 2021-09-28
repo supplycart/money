@@ -205,4 +205,20 @@ class MoneyTest extends TestCase
         $this->assertEquals('12.0100', $result->getDecimalAmount());
         $this->assertEquals(120100, $result->getAmount());
     }
+
+    public function test_rounding_missing_one_cent_with_4_decimal_places()
+    {
+        $money = Money::of('12345', 'MYR', 4);
+        $result = $money->multiply('0.5')->getAmount();
+
+        $this->assertEquals(6173, $result);
+    }
+
+    public function test_rounding_missing_one_cent_with_2_decimal_places()
+    {
+        $money = Money::of('12345', 'MYR');
+        $result = $money->multiply('0.5')->getAmount();
+
+        $this->assertEquals(6173, $result);
+    }
 }
