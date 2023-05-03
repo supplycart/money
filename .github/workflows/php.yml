@@ -12,7 +12,7 @@ env:
 jobs:
   php-cs-fixer:
     name: PHP-CS-Fixer
-    runs-on: ubuntu-18.04
+    runs-on: ${{ vars.RUNNER_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -33,7 +33,7 @@ jobs:
 
   php-unit:
     name: PHP Unit
-    runs-on: ubuntu-18.04
+    runs-on: ${{ vars.RUNNER_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
