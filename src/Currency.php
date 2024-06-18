@@ -4,14 +4,14 @@ namespace Supplycart\Money;
 
 class Currency
 {
-    const MYR = 'MYR';
-    const IDR = 'IDR';
-    const SGD = 'SGD';
-    const HKD = 'HKD';
-    const VND = 'VND';
-    const THB = 'THB';
-    const BND = 'BND';
-    const PHP = 'PHP';
+    public const MYR = 'MYR';
+    public const IDR = 'IDR';
+    public const SGD = 'SGD';
+    public const HKD = 'HKD';
+    public const VND = 'VND';
+    public const THB = 'THB';
+    public const BND = 'BND';
+    public const PHP = 'PHP';
 
     public static function default()
     {
@@ -20,7 +20,7 @@ class Currency
 
     public static function options()
     {
-        $class = new \ReflectionClass(__CLASS__);
+        $class = new \ReflectionClass(self::class);
 
         return $class->getConstants();
     }

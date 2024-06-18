@@ -8,6 +8,7 @@ use Supplycart\Money\Money;
 
 class MoneyValue implements CastsAttributes
 {
+    #[\Override]
     public function get($model, string $key, $value, array $attributes)
     {
         $scale = method_exists($model, 'getDecimalValue') ? $model->getDecimalValue() : 2;
@@ -15,6 +16,7 @@ class MoneyValue implements CastsAttributes
         return new Money($value, $model->currency ?? Currency::default(), $scale);
     }
 
+    #[\Override]
     public function set($model, string $key, $value, array $attributes)
     {
         if ($value instanceof Money) {
