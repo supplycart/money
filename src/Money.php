@@ -15,7 +15,7 @@ use Stringable;
 
 final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 {
-    private BrickMoney $instance;
+    private readonly BrickMoney $instance;
 
     private ?TaxContract $tax = null;
 
@@ -45,7 +45,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
      */
     public static function parse($value, $currency = null): Money
     {
-        $currency = $currency ?? Currency::default();
+        $currency ??= Currency::default();
 
         if ($value instanceof Money) {
             return new static($value->getAmount(), $value->getCurrency());
@@ -111,7 +111,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
 
     public function format($locale = null)
     {
-        $locale = $locale ?? Locale::$currencies[(string) $this->instance->getCurrency()];
+        $locale ??= Locale::$currencies[(string) $this->instance->getCurrency()];
 
         return $this->instance->formatTo($locale);
     }
@@ -252,7 +252,8 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
         return $this->instance->isZero();
     }
 
-    public function __toString()
+    #[\Override]
+    public function __toString(): string
     {
         return (string) $this->getDecimalAmount(2);
     }
@@ -260,6 +261,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function toArray()
     {
         return [
@@ -268,11 +270,13 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
         ];
     }
 
+    #[\Override]
     public function toJson($options = 0)
     {
         return json_encode($this->toArray(), $options);
     }
 
+    #[\Override]
     public function jsonSerialize()
     {
         return $this->toArray();
@@ -284,14 +288,14 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
      */
     public function getDivider(): int
     {
-        return $this->scale === 2 ? 1 : pow(10, $this->scale - 2);
+        return $this->scale === 2 ? 1 : 10 ** ($this->scale - 2);
     }
 
     public function convertToDifferentDecimalPoint(int $newDecimalPoint): Money
     {
         $differenceInScale = $newDecimalPoint - $this->scale;
 
-        $dividerOrMultiplier = pow(10, abs($differenceInScale));
+        $dividerOrMultiplier = 10 ** abs($differenceInScale);
 
         $newValue = $this->scale < $newDecimalPoint
             ? $this->instance->multipliedBy($dividerOrMultiplier, Money::$roundingMode)

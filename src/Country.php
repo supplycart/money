@@ -4,16 +4,16 @@ namespace Supplycart\Money;
 
 class Country
 {
-    const MALAYSIA = 'Malaysia';
-    const SINGAPORE = 'Singapore';
-    const THAILAND = 'Thailand';
-    const INDONESIA = 'Indonesia';
-    const PHILIPPINES = 'Philippines';
-    const VIETNAM = 'Vietnam';
-    const HONG_KONG = 'Hong Kong';
-    const BRUNEI = 'Brunei';
-    const CAMBODIA = 'Cambodia';
-    const MYANMAR = 'Myanmar';
+    public const MALAYSIA = 'Malaysia';
+    public const SINGAPORE = 'Singapore';
+    public const THAILAND = 'Thailand';
+    public const INDONESIA = 'Indonesia';
+    public const PHILIPPINES = 'Philippines';
+    public const VIETNAM = 'Vietnam';
+    public const HONG_KONG = 'Hong Kong';
+    public const BRUNEI = 'Brunei';
+    public const CAMBODIA = 'Cambodia';
+    public const MYANMAR = 'Myanmar';
 
     public static function default()
     {
@@ -22,7 +22,7 @@ class Country
 
     public static function options()
     {
-        $class = new \ReflectionClass(__CLASS__);
+        $class = new \ReflectionClass(self::class);
 
         $values = array_values($class->getConstants());
 

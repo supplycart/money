@@ -12,6 +12,7 @@ class MoneyServiceProvider extends ServiceProvider
      *
      * @return void
      */
+    #[\Override]
     public function register()
     {
         $this->mergeConfigFrom(
