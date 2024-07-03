@@ -277,7 +277,7 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
     }
 
     #[\Override]
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }
