@@ -1,26 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Supplycart\Money\Contracts;
 
 interface Tax
 {
-    /**
-     * @return string Tax rate in string. e.g 10% tax rate => '10.0'
-     */
+    /** Tax rate as a numeric string, e.g. a 10% rate is `10.0`. */
     public function getTaxRate(): string;
 
-    /**
-     * @return string Tax description
-     */
+    /** Human-readable tax description. */
     public function getTaxDescription(): string;
 
-    /**
-     * @return string Country name where the tax is for
-     */
+    /** Country where the tax applies. */
     public function getTaxCountry(): string;
 
-    /**
-     * @return string Currency code e.g MYR
-     */
+    /** ISO 4217 currency code, e.g. MYR. */
     public function getTaxCurrency(): string;
 }

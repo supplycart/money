@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Supplycart\Money\Tests\Feature;
 
 use Orchestra\Testbench\TestCase;
@@ -7,9 +9,9 @@ use Supplycart\Money\Country;
 use Supplycart\Money\Currency;
 use Supplycart\Money\Money;
 
-class MoneyTaxTest extends TestCase
+final class MoneyTaxTest extends TestCase
 {
-    public function test_can_get_tax_amount_for_a_money()
+    public function test_can_get_tax_amount_for_a_money(): void
     {
         $money = Money::of(252)->withTax(new Tax);
 
@@ -19,7 +21,7 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals('12.10', (string) $money->getTaxAmount(80));
     }
 
-    public function test_can_get_tax_amount_for_a_money_for_4_decimal_place()
+    public function test_can_get_tax_amount_for_a_money_for_4_decimal_place(): void
     {
         $money = Money::of(10000, 'MYR', 4)->withTax(new Tax);
 
@@ -29,7 +31,7 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals('4.8000', (string) $money->getTaxAmount(80));
     }
 
-    public function test_can_get_after_tax_amount()
+    public function test_can_get_after_tax_amount(): void
     {
         $money = Money::of(252)->withTax(new Tax);
         $this->assertEquals(267, $money->afterTax()->getAmount());
@@ -41,7 +43,7 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals(252, $money->afterTax()->getAmount());
     }
 
-    public function test_can_get_after_tax_amount_for_4_decimal()
+    public function test_can_get_after_tax_amount_for_4_decimal(): void
     {
         $money = Money::of(10000, 'MYR', 4)->withTax(new Tax);
 
@@ -54,28 +56,28 @@ class MoneyTaxTest extends TestCase
         $this->assertEquals(1.0000, $money->afterTax()->getDecimalAmount());
     }
 
-    public function test_can_get_before_tax_amount()
+    public function test_can_get_before_tax_amount(): void
     {
         $money = Money::of(267)->withTax(new Tax);
         $this->assertEquals(252, $money->beforeTax()->getAmount());
         $this->assertEquals(2.52, $money->beforeTax()->getDecimalAmount());
     }
 
-    public function test_can_get_before_tax_amount_for_4_decimal_place()
+    public function test_can_get_before_tax_amount_for_4_decimal_place(): void
     {
-        $money = Money::of(10600,'MYR', 4)->withTax(new Tax);
+        $money = Money::of(10600, 'MYR', 4)->withTax(new Tax);
         $this->assertEquals(10000, $money->beforeTax()->getAmount());
         $this->assertEquals(1.0000, $money->beforeTax()->getDecimalAmount());
     }
 
-    public function test_can_get_tax_from_price_incl_tax()
+    public function test_can_get_tax_from_price_incl_tax(): void
     {
         $money = Money::of(267)->withTax(new Tax);
         $this->assertEquals(15, $money->getTaxAmountFromInclusiveTax()->getAmount());
         $this->assertEquals(0.15, $money->getTaxAmountFromInclusiveTax()->getDecimalAmount());
     }
 
-    public function test_can_get_tax_from_price_incl_tax_for_4_decimal_place()
+    public function test_can_get_tax_from_price_incl_tax_for_4_decimal_place(): void
     {
         $money = Money::of(10600, 'MYR', 4)->withTax(new Tax);
         $this->assertEquals(600, $money->getTaxAmountFromInclusiveTax()->getAmount());
@@ -83,9 +85,8 @@ class MoneyTaxTest extends TestCase
     }
 }
 
-class Tax implements \Supplycart\Money\Contracts\Tax
+final class Tax implements \Supplycart\Money\Contracts\Tax
 {
-
     #[\Override]
     public function getTaxRate(): string
     {

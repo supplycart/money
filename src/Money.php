@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Supplycart\Money;
 
 use Brick\Math\BigDecimal;
+use Brick\Math\BigNumber;
 use Brick\Math\BigRational;
 use Brick\Math\RoundingMode;
 use Brick\Money\Context\CustomContext;
@@ -10,115 +13,133 @@ use Brick\Money\Currency as BrickCurrency;
 use Brick\Money\Money as BrickMoney;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
-use Supplycart\Money\Contracts\Tax as TaxContract;
+use InvalidArgumentException;
+use JsonSerializable;
 use Stringable;
+use Supplycart\Money\Contracts\Tax as TaxContract;
 
-final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
+/** @implements Arrayable<string, int|string> */
+final class Money implements Arrayable, Jsonable, JsonSerializable, Stringable
 {
     private readonly BrickMoney $instance;
 
     private ?TaxContract $tax = null;
 
-    public int $scale;
+    public static RoundingMode $roundingMode = RoundingMode::HalfUp;
 
-    public static int $roundingMode = RoundingMode::HALF_UP;
+    /** @var int<2, max> */
+    public readonly int $scale;
 
-    public function __construct($amount = 0, string $currency = Currency::MYR, $scale = 2)
-    {
-        $this->instance = $this->createInstance(
-            $amount ?? 0,
-            $currency,
-            $scale
-        );
+    public function __construct(
+        BigNumber|int|float|string|null $amount = 0,
+        string $currency = Currency::MYR,
+        int $scale = 2,
+    ) {
+        if ($scale < 2) {
+            throw new InvalidArgumentException('Money scale must be two or greater.');
+        }
+
         $this->scale = $scale;
+        $this->instance = $this->createInstance($amount ?? 0, $currency, $scale);
     }
 
-    public static function of($amount = 0, string $currency = Currency::MYR, $decimal = 2)
-    {
-        return new static($amount, $currency, $decimal);
+    public static function of(
+        BigNumber|int|float|string|null $amount = 0,
+        string $currency = Currency::MYR,
+        int $decimal = 2,
+    ): self {
+        return new self($amount, $currency, $decimal);
     }
 
     /**
-     * @param int|float|array|Money|BrickMoney $value
-     * @param null $currency
-     * @return static
+     * @param  array{amount?: BigNumber|int|float|string|null, currency?: string|null}|BigNumber|BrickMoney|Money|int|float|string|null  $value
      */
-    public static function parse($value, $currency = null): Money
-    {
+    public static function parse(
+        BigNumber|BrickMoney|self|array|int|float|string|null $value,
+        ?string $currency = null,
+    ): self {
         $currency ??= Currency::default();
 
-        if ($value instanceof Money) {
-            return new static($value->getAmount(), $value->getCurrency());
+        if ($value instanceof self) {
+            return new self($value->getAmount(), $value->getCurrency(), $value->scale);
         }
 
         if ($value instanceof BrickMoney) {
-            return new static($value->getMinorAmount(), $value->getCurrency());
+            return new self($value->getMinorAmount(), (string) $value->getCurrency());
         }
 
         if (is_array($value) && array_key_exists('amount', $value)) {
-            return new static(data_get($value, 'amount', 0), data_get($value, 'currency', $currency));
+            return new self($value['amount'], $value['currency'] ?? $currency);
+        }
+
+        if (is_array($value)) {
+            throw new InvalidArgumentException('A money array must contain an amount key.');
         }
 
         if (is_float($value)) {
-            return new static((string) BigDecimal::of($value)->getUnscaledValue(), $currency);
+            return new self(BigDecimal::of((string) $value)->getUnscaledValue(), $currency);
         }
 
-        return new static($value, $currency);
+        return new self($value, $currency);
     }
 
-    public static function fromCents(int $amount, string $currency = Currency::MYR)
+    public static function fromCents(int $amount, string $currency = Currency::MYR): self
     {
         $instance = BrickMoney::ofMinor($amount, $currency);
 
-        return new static($instance->getMinorAmount(), $currency);
+        return new self($instance->getMinorAmount(), $currency);
     }
 
-    public static function fromDecimal(string $amount, string $currency = Currency::MYR)
+    public static function fromDecimal(BigNumber|int|float|string $amount, string $currency = Currency::MYR): self
     {
-        $instance = BrickMoney::of($amount, $currency);
+        $instance = BrickMoney::of(self::normalizeNumber($amount), $currency);
 
-        return new static($instance->getMinorAmount(), $currency);
+        return new self($instance->getMinorAmount(), $currency);
     }
 
     public function getAmount(): int
     {
-        return $this->instance->getAmount()->dividedBy($this->getDivider(), $this->scale, static::$roundingMode)->getUnscaledValue()->toInt();
-    }
-
-    public function getDecimalAmount($scale = 2): string
-    {
         return $this->instance
             ->getAmount()
-            ->dividedBy($this->getDivider(), $this->scale, static::$roundingMode)
-            ->toScale($this->scale, static::$roundingMode);
+            ->dividedBy($this->getDivider(), $this->scale, self::$roundingMode)
+            ->getUnscaledValue()
+            ->toInt();
     }
 
     /**
-     * @deprecated use `getDecimalAmount()`
+     * The argument is retained for backward compatibility; the instance scale
+     * remains authoritative.
      */
-    public function toDecimal()
+    public function getDecimalAmount(int $scale = 2): string
+    {
+        return (string) $this->instance
+            ->getAmount()
+            ->dividedBy($this->getDivider(), $this->scale, self::$roundingMode)
+            ->toScale($this->scale, self::$roundingMode);
+    }
+
+    /** @deprecated use `getDecimalAmount()` */
+    public function toDecimal(): string
     {
         return $this->getDecimalAmount(2);
     }
 
-    /**
-     * @deprecated use `format()`
-     */
-    public function toCurrencyFormat()
+    /** @deprecated use `format()` */
+    public function toCurrencyFormat(): string
     {
         return $this->format();
     }
 
-    public function format($locale = null)
+    public function format(?string $locale = null): string
     {
-        $locale ??= Locale::$currencies[(string) $this->instance->getCurrency()];
+        $locale ??= Locale::$currencies[$this->getCurrency()] ?? 'en_MY';
 
-        return $this->instance->formatTo($locale);
+        return $this->instance->formatToLocale($locale);
     }
 
-    public function toNumberFormat($decimal = 2)
+    public function toNumberFormat(int $decimal = 2): string
     {
-        return number_format($this->getDecimalAmount(), $decimal);
+        return number_format((float) $this->getDecimalAmount(), $decimal);
     }
 
     public function getCurrency(): string
@@ -126,125 +147,124 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
         return (string) $this->instance->getCurrency();
     }
 
-    public function add($value): Money
+    public function add(BigNumber|self|int|float|string $value): self
     {
-        if (!$value instanceof Money) {
-            $value = Money::of($value, $this->getCurrency(), $this->scale);
+        if (! $value instanceof self) {
+            $value = self::of($value, $this->getCurrency(), $this->scale);
         }
 
-        return new static(
-            $this->instance->plus(
-                $value->multiply($this->getDivider()),
-                static::$roundingMode
-            )->getMinorAmount(),
-            $this->getCurrency(),
-            $this->scale
+        $result = $this->instance->plus(
+            $value->multiply($this->getDivider())->getDecimalAmount(),
+            self::$roundingMode,
         );
+
+        return new self($result->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
-    public function subtract($value): Money
+    public function subtract(BigNumber|self|int|float|string $value): self
     {
-        if (!$value instanceof Money) {
-            $value = Money::of($value, $this->getCurrency(), $this->scale);
+        if (! $value instanceof self) {
+            $value = self::of($value, $this->getCurrency(), $this->scale);
         }
 
-        return new static(
-            $this->instance->minus($value->multiply($this->getDivider()))->getMinorAmount(),
-            $this->instance->getCurrency(),
-            $this->scale
+        $result = $this->instance->minus(
+            $value->multiply($this->getDivider())->getDecimalAmount(),
+            self::$roundingMode,
         );
+
+        return new self($result->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
-    public function multiply($value): Money
+    public function multiply(BigNumber|int|float|string $value): self
     {
-        $value = $this->instance->multipliedBy($value, static::$roundingMode);
+        $result = $this->instance->multipliedBy(self::normalizeNumber($value), self::$roundingMode);
 
-        return new static($value->getMinorAmount(), $value->getCurrency(), $this->scale);
+        return new self($result->getMinorAmount(), (string) $result->getCurrency(), $this->scale);
     }
 
-    public function divide($value): Money
+    public function divide(BigNumber|int|float|string $value): self
     {
-        $value = $this->instance->dividedBy($value, static::$roundingMode);
+        $result = $this->instance->dividedBy(self::normalizeNumber($value), self::$roundingMode);
 
-        return new static($value->getMinorAmount(), $this->instance->getCurrency(), $this->scale);
+        return new self($result->getMinorAmount(), (string) $result->getCurrency(), $this->scale);
     }
 
-    public function withTax(TaxContract $tax): Money
+    public function withTax(TaxContract $tax): self
     {
         $this->tax = $tax;
 
         return $this;
     }
 
-    public function getTaxAmount($quantity = 1): Money
+    public function getTaxAmount(BigNumber|int|float|string $quantity = 1): self
     {
-        if (!$this->tax) {
-            return static::zero($this->getCurrency());
+        if (! $this->tax instanceof TaxContract) {
+            return self::of(0, $this->getCurrency(), $this->scale);
         }
 
         $taxValue = $this->instance->toRational()
             ->multipliedBy($this->getTaxRate())
-            ->multipliedBy($quantity)
-            ->to($this->instance->getContext(), static::$roundingMode);
+            ->multipliedBy(self::normalizeNumber($quantity))
+            ->toContext($this->instance->getContext(), self::$roundingMode);
 
-        return static::of($taxValue->getMinorAmount(), $this->getCurrency(), $this->scale);
+        return self::of($taxValue->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
-    public function getTaxAmountFromInclusiveTax(): Money
+    public function getTaxAmountFromInclusiveTax(): self
     {
-        if (!$this->tax) {
+        if (! $this->tax instanceof TaxContract) {
             return $this;
         }
 
         $taxFromInclusive = $this->instance->toRational()
             ->multipliedBy($this->getTaxRate())
             ->dividedBy($this->getTaxRate()->plus(1))
-            ->to($this->instance->getContext(), static::$roundingMode);
+            ->toContext($this->instance->getContext(), self::$roundingMode);
 
-        return new static($taxFromInclusive->getMinorAmount(), $this->getCurrency(), $this->scale);
+        return new self($taxFromInclusive->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
     public function getTaxRate(): BigDecimal
     {
-        if (!$this->tax) {
+        if (! $this->tax instanceof TaxContract) {
             return BigDecimal::zero();
         }
 
         return BigRational::of($this->tax->getTaxRate())
             ->dividedBy(100)
-            ->toScale($this->scale, static::$roundingMode);
+            ->toScale($this->scale, self::$roundingMode);
     }
 
-    public function afterTax($quantity = 1): Money
+    public function afterTax(BigNumber|int|float|string $quantity = 1): self
     {
-        if (!$this->tax) {
+        if (! $this->tax instanceof TaxContract) {
             return $this;
         }
 
         $afterTax = $this->instance->toRational()
             ->multipliedBy($this->getTaxRate()->plus(1))
-            ->multipliedBy($quantity)
-            ->to($this->instance->getContext(), static::$roundingMode);
+            ->multipliedBy(self::normalizeNumber($quantity))
+            ->toContext($this->instance->getContext(), self::$roundingMode);
 
-        return new static($afterTax->getMinorAmount(), $this->getCurrency(), $this->scale);
+        return new self($afterTax->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
-    public function beforeTax(): Money
+    public function beforeTax(): self
     {
-        if (!$this->tax) {
+        if (! $this->tax instanceof TaxContract) {
             return $this;
         }
 
         $beforeTax = $this->instance->toRational()
             ->dividedBy($this->getTaxRate()->plus(1))
-            ->to($this->instance->getContext(), static::$roundingMode);
+            ->toContext($this->instance->getContext(), self::$roundingMode);
 
-        return new static($beforeTax->getMinorAmount(), $this->getCurrency(), $this->scale);
+        return new self($beforeTax->getMinorAmount(), $this->getCurrency(), $this->scale);
     }
 
-    public static function zero(string $currency = Currency::MYR): Money
+    public static function zero(string $currency = Currency::MYR): self
     {
-        return new static(0, $currency);
+        return new self(0, $currency);
     }
 
     public function isZero(): bool
@@ -255,14 +275,12 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
     #[\Override]
     public function __toString(): string
     {
-        return (string) $this->getDecimalAmount(2);
+        return $this->getDecimalAmount(2);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @return array{amount: int, currency: string} */
     #[\Override]
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'amount' => $this->getAmount(),
@@ -271,48 +289,62 @@ final class Money implements Arrayable, Jsonable, Stringable, \JsonSerializable
     }
 
     #[\Override]
-    public function toJson($options = 0)
+    public function toJson($options = 0): string
     {
-        return json_encode($this->toArray(), $options);
+        return json_encode($this->toArray(), $options | JSON_THROW_ON_ERROR);
     }
 
+    /** @return array{amount: int, currency: string} */
     #[\Override]
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return $this->toArray();
     }
 
-    /**
-     * This function is to cater more than two decimal points
-     * @return int
-     */
     public function getDivider(): int
     {
         return $this->scale === 2 ? 1 : 10 ** ($this->scale - 2);
     }
 
-    public function convertToDifferentDecimalPoint(int $newDecimalPoint): Money
+    public function convertToDifferentDecimalPoint(int $newDecimalPoint): self
     {
-        $differenceInScale = $newDecimalPoint - $this->scale;
+        if ($newDecimalPoint < 2) {
+            throw new InvalidArgumentException('Money scale must be two or greater.');
+        }
 
+        $differenceInScale = $newDecimalPoint - $this->scale;
         $dividerOrMultiplier = 10 ** abs($differenceInScale);
 
         $newValue = $this->scale < $newDecimalPoint
-            ? $this->instance->multipliedBy($dividerOrMultiplier, Money::$roundingMode)
-            : $this->instance->dividedBy($dividerOrMultiplier, Money::$roundingMode);
+            ? $this->instance->multipliedBy($dividerOrMultiplier, self::$roundingMode)
+            : $this->instance->dividedBy($dividerOrMultiplier, self::$roundingMode);
 
-        return new Money($newValue->getMinorAmount(), $newValue->getCurrency(), $newDecimalPoint);
+        return new self($newValue->getMinorAmount(), (string) $newValue->getCurrency(), $newDecimalPoint);
     }
 
-    private function createInstance($amount = 0, string $currency = Currency::MYR, $scale = 2)
-    {
-
-        $currency = BrickCurrency::of($currency);
-        $currency = new BrickCurrency($currency->getCurrencyCode(), $currency->getNumericCode(), $currency->getName(), 2);
+    /** @param int<2, max> $scale */
+    private function createInstance(
+        BigNumber|int|float|string $amount = 0,
+        string $currency = Currency::MYR,
+        int $scale = 2,
+    ): BrickMoney {
+        $currencyDefinition = BrickCurrency::of($currency);
+        $currencyDefinition = new BrickCurrency(
+            $currencyDefinition->getCurrencyCode(),
+            $currencyDefinition->getNumericCode(),
+            $currencyDefinition->getName(),
+            2,
+        );
 
         $context = new CustomContext($scale);
-        $amount = BigRational::of($amount)->dividedBy(10 ** $currency->getDefaultFractionDigits());
+        $decimalAmount = BigRational::of(self::normalizeNumber($amount))
+            ->dividedBy(10 ** $currencyDefinition->getDefaultFractionDigits());
 
-        return BrickMoney::create($amount, $currency, $context, static::$roundingMode);
+        return BrickMoney::of($decimalAmount, $currencyDefinition, $context, self::$roundingMode);
+    }
+
+    private static function normalizeNumber(BigNumber|int|float|string $value): BigNumber|int|string
+    {
+        return is_float($value) ? (string) $value : $value;
     }
 }

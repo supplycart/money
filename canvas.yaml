@@ -21,7 +21,7 @@ model:
   namespace: Supplycart\Money
 
 provider:
-  namespace: Supplycart\Money\Providers
+  namespace: Supplycart\Money
 
 testing:
   namespace: Supplycart\Money\Tests

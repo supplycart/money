@@ -1,72 +1,54 @@
-name: PHP Composer
+name: PHP
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
-env:
-  php_version: "7.4"
+permissions:
+  contents: read
 
 jobs:
-  php-cs-fixer:
-    name: PHP-CS-Fixer
-    runs-on: ${{ vars.RUNNER_VERSION }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  test:
+    name: PHP 8.5
+    runs-on: ubuntu-latest
 
-      - name: Setup PHP
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ env.php_version }}
-          tools: php-cs-fixer:v2.18.4, cs2pr
+          php-version: '8.5'
+          coverage: none
+          extensions: intl
+          tools: composer:v2
 
-      - name: Run PHP-CS-Fixer
-        run: |
-          IFS='
-          '
-          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRTUXB "${GITHUB_SHA}..HEAD")
-          if ! echo "${CHANGED_FILES}" | grep -qE "^(\\.php_cs(\\.dist)?|composer\\.lock)$"; then EXTRA_ARGS=$(printf -- '--path-mode=intersection\n--\n%s' "${CHANGED_FILES}"); else EXTRA_ARGS=''; fi
-          php-cs-fixer fix --dry-run --verbose --format=checkstyle --using-cache=no ${EXTRA_ARGS} | cs2pr
-
-  php-unit:
-    name: PHP Unit
-    runs-on: ${{ vars.RUNNER_VERSION }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Get composer cache directory
+      - name: Find Composer cache directory
         id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
-      - name: Cache dependencies
-        uses: actions/cache@v2
+      - name: Cache Composer packages
+        uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          key: ${{ runner.os }}-php-8.5-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.5-composer-
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.php_version }}
-          extensions: ${{ env.extensions }}
-
-      - name: Setup problem matchers for PHP
-        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+      - name: Validate Composer files
+        run: composer validate --strict
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Execute tests
-        run: vendor/bin/phpunit --log-junit ./test-reports/junit.xml
+      - name: Check code style
+        run: composer lint:check
 
-      - name: Archive logs
-        uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: test-logs
-          path: storage/logs/
+      - name: Run static analysis
+        run: composer analyse
+
+      - name: Run test suite
+        run: composer test

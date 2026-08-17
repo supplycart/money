@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Supplycart\Money\Console;
 
 use Illuminate\Console\Command;
 
-class InstallCommand extends Command
+final class InstallCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -20,23 +22,10 @@ class InstallCommand extends Command
      */
     protected $description = 'Install package';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function handle(): int
     {
-        parent::__construct();
-    }
+        $this->components->info('The Supplycart Money package is installed.');
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
-    public function handle()
-    {
-
+        return self::SUCCESS;
     }
 }

@@ -1,16 +1,27 @@
 {
   "name": "supplycart/money",
   "description": "Package to handle money operation for supplycart",
+  "scripts": {
+    "analyse": "@php vendor/bin/phpstan analyse --no-progress",
+    "lint": "@php vendor/bin/pint",
+    "lint:check": "@php vendor/bin/pint --test",
+    "test": "@php vendor/bin/phpunit"
+  },
   "require": {
-    "php": "^8.3",
-    "moneyphp/money": "^4.5",
-    "ext-json": "*",
+    "php": "^8.5",
     "ext-intl": "*",
-    "brick/money": "^0.5.0"
+    "ext-json": "*",
+    "brick/money": "^0.14",
+    "illuminate/console": "^13.0",
+    "illuminate/contracts": "^13.0",
+    "illuminate/support": "^13.0"
   },
   "require-dev": {
-    "orchestra/testbench": "^9.0",
-    "orchestra/canvas": "^9.0"
+    "laravel/pint": "^1.27",
+    "orchestra/canvas": "^11.0",
+    "orchestra/testbench": "^11.0",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^12.5"
   },
   "autoload": {
     "psr-4": {
@@ -35,5 +46,8 @@
       "name": "Azri Ismail",
       "email": "mazri.iar@gmail.com"
     }
-  ]
+  ],
+  "config": {
+    "sort-packages": true
+  }
 }
