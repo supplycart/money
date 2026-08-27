@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Supplycart\Money\Country;
 use Supplycart\Money\Currency;
 use Supplycart\Money\Locale;

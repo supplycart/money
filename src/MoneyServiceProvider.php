@@ -1,34 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Supplycart\Money;
 
 use Illuminate\Support\ServiceProvider;
-use Supplycart\Money\Console\InstallCommand;
 
-class MoneyServiceProvider extends ServiceProvider
+final class MoneyServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     *
-     * @return void
-     */
     #[\Override]
-    public function register()
+    public function register(): void
     {
-        $this->mergeConfigFrom(
-            __DIR__ . '/../config/money.php', 'money'
-        );
+        $this->mergeConfigFrom(__DIR__.'/../config/money.php', 'money');
     }
 
-    /**
-     * Bootstrap services.
-     *
-     * @return void
-     */
-    public function boot()
+    public function boot(): void
     {
-        $this->publishes([
-            __DIR__ . '/../config/money.php' => config_path('money.php'),
-        ]);
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/money.php' => config_path('money.php'),
+            ], 'money-config');
+        }
     }
 }
